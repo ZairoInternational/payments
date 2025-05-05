@@ -3,9 +3,25 @@
   <head>
     <title>Payment Page</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        font-family: sans-serif;
+        background-color: #f8f9fa;
+      }
+      h1 {
+        color: #5e72e4;
+      }
+    </style>
   </head>
+
   <body>
-    <h1>Redirecting to Razorpay Checkout...</h1>
+    <h1>Processing Payment...</h1>
 
     <script>
       const urlParams = new URLSearchParams(window.location.search);
@@ -14,7 +30,7 @@
       const bookingId = urlParams.get("bookingId");
 
       const options = {
-        key: "YOUR_PUBLIC_KEY",
+        key: "YOUR_RAZORPAY_PUBLIC_KEY", // Replace with your actual Razorpay public key
         amount: amount * 100,
         currency: "INR",
         name: "VacationSaga",
@@ -27,24 +43,36 @@
               orderId: response.razorpay_order_id,
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
-              bookingId: bookingId
+              bookingId: bookingId,
             }),
-          }).then(() => {
-            window.location.href = "https://your-site.vercel.app/payment-success";
-          });
+          })
+            .then(() => {
+              window.ReactNativeWebView.postMessage("payment-success");
+            })
+            .catch((err) => {
+              console.error("Verification API failed", err);
+              window.ReactNativeWebView.postMessage("payment-error");
+            });
         },
         prefill: {
           name: "Aniket Yadav",
           email: "aniket@gmail.com",
-          contact: "9876543210"
+          contact: "9876543210",
         },
         theme: {
-          color: "#5E72E4"
-        }
+          color: "#5E72E4",
+        },
       };
 
       const rzp1 = new Razorpay(options);
+
+      rzp1.on("payment.failed", function (response) {
+        console.error("Payment failed", response.error);
+        window.ReactNativeWebView.postMessage("payment-error");
+      });
+
       rzp1.open();
     </script>
   </body>
 </html>
+
